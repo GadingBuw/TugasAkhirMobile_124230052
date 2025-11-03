@@ -1,28 +1,32 @@
-// lib/main.dart
-
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // 1. Import hive_flutter
-import 'package:path_provider/path_provider.dart'; // 2. Import path_provider
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'models/favorite_book.dart'; // 3. Import model favorit
+import 'models/favorite_book.dart';
+import 'models/user_model.dart';
 import 'providers/auth_provider.dart';
 import 'providers/book_provider.dart';
-import 'providers/favorite_provider.dart'; // 4. Import provider favorit (akan kita buat)
+import 'providers/favorite_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/splash_screen.dart';
+import 'services/notification_service.dart';
 
-// 5. Ubah main menjadi async
 Future<void> main() async {
-  // 6. Pastikan Flutter terinisialisasi
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // 7. Dapatkan direktori dan inisialisasi Hive
+
   final appDocumentDir = await getApplicationDocumentsDirectory();
   await Hive.initFlutter(appDocumentDir.path);
-  
-  // 8. Daftarkan Adapter
+
   Hive.registerAdapter(FavoriteBookAdapter());
+  Hive.registerAdapter(UserAdapter());
+
+  // --- HAPUS PEMBUKAAN BOX FAVORIT DARI SINI ---
+  // await Hive.openBox<FavoriteBook>('favorites');
+  await Hive.openBox<User>('users');
+  // ------------------------------------------
+
+  await NotificationService().initialize();
 
   runApp(const MyApp());
 }
@@ -34,10 +38,33 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // 1. AuthProvider harus dibuat terlebih dahulu
         ChangeNotifierProvider(create: (ctx) => AuthProvider()),
+        
+        // 2. BookProvider tidak bergantung pada apa pun
         ChangeNotifierProvider(create: (ctx) => BookProvider()),
-        // 9. Tambahkan FavoriteProvider
-        ChangeNotifierProvider(create: (ctx) => FavoriteProvider()),
+
+        // 3. UBAH FavoriteProvider menjadi PROXY
+        ChangeNotifierProxyProvider<AuthProvider, FavoriteProvider>(
+          // 'create' dipanggil sekali saat app start
+          create: (context) => FavoriteProvider(),
+          
+          // 'update' dipanggil setiap kali AuthProvider memanggil notifyListeners()
+          update: (context, auth, previousFavoriteProvider) {
+            // 'auth' adalah instance AuthProvider
+            // 'previousFavoriteProvider' adalah instance FavoriteProvider dari build sebelumnya
+            
+            if (previousFavoriteProvider == null) return FavoriteProvider();
+
+            // Cek apakah username-nya berubah
+            if (auth.activeUsername != previousFavoriteProvider.currentUsername) {
+              // Jika berubah (login/logout), panggil method updateUser
+              previousFavoriteProvider.updateUser(auth.activeUsername);
+            }
+            return previousFavoriteProvider;
+          },
+        ),
+        // --- BATAS PERUBAHAN PROVIDER ---
       ],
       child: MaterialApp(
         title: 'Perpustakaan Novel',
@@ -62,4 +89,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

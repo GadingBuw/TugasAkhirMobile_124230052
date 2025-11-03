@@ -390,39 +390,6 @@ class _SaranDanKesanPesanTabState extends State<SaranDanKesanPesanTab>
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
-                  // Footer Quote
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(color: Color(0xFFD4AF37).withOpacity(0.5), width: 1),
-                        bottom: BorderSide(color: Color(0xFFD4AF37).withOpacity(0.5), width: 1),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.auto_stories_rounded,
-                          color: Color(0xFFF5E6D3).withOpacity(0.7),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Terima kasih atas feedback Anda',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color(0xFFF5E6D3).withOpacity(0.8),
-                            fontSize: 13,
-                            fontStyle: FontStyle.italic,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),

@@ -1,310 +1,5 @@
-// import 'package:flutter/material.dart';
-
-// class DendaTab extends StatefulWidget {
-//   const DendaTab({super.key});
-
-//   @override
-//   State<DendaTab> createState() => _DendaTabState();
-// }
-
-// class _DendaTabState extends State<DendaTab> {
-//   // Variabel untuk menyimpan tanggal yang dipilih
-//   DateTime? _tanggalTenggat;
-//   DateTime? _tanggalKembali;
-
-//   // Variabel untuk menyimpan hasil perhitungan
-//   int? _totalDenda; // Ini akan menjadi basis IDR
-
-//   // --- Kurs Manual (Hardcoded) ---
-//   // Estimasi: 1 IDR = X Mata Uang Asing
-//   // Anda bisa mengubah nilai ini kapan saja.
-//   final Map<String, double> _manualRates = {
-//     'MYR': 0.00029, // 1 IDR = 0.00029 MYR
-//     'USD': 0.000061, // 1 IDR = 0.000061 USD
-//     'EUR': 0.000057, // 1 IDR = 0.000057 EUR
-//   };
-//   // --- Tidak ada lagi variabel _isLoadingRates atau _apiError ---
-
-//   // @override
-//   // void initState() {
-//   //   super.initState();
-//   //   // Tidak perlu memanggil API lagi
-//   // }
-
-//   // --- Tidak ada lagi fungsi _fetchExchangeRates ---
-
-//   // Fungsi untuk menampilkan format tanggal
-//   String _formatDate(DateTime? dt) {
-//     if (dt == null) {
-//       return 'Belum dipilih';
-//     }
-//     return "${dt.day}-${dt.month}-${dt.year}";
-//   }
-
-//   // Fungsi untuk memilih Tanggal
-//   Future<DateTime?> _pilihTanggal(BuildContext context) async {
-//     final DateTime? tanggal = await showDatePicker(
-//       context: context,
-//       initialDate: DateTime.now(),
-//       firstDate: DateTime(2020),
-//       lastDate: DateTime(2030),
-//     );
-//     return tanggal;
-//   }
-
-//   // Fungsi untuk menghitung denda
-//   void _hitungDenda() {
-//     if (_tanggalTenggat == null || _tanggalKembali == null) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(
-//           content: Text('Harap pilih tanggal tenggat DAN tanggal kembali!'),
-//           backgroundColor: Colors.orange,
-//         ),
-//       );
-//       return;
-//     }
-
-//     if (_tanggalKembali!.isBefore(_tanggalTenggat!)) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(
-//           content: Text('Tanggal kembali tidak boleh sebelum tanggal tenggat!'),
-//           backgroundColor: Colors.red,
-//         ),
-//       );
-//       setState(() {
-//         _totalDenda = null;
-//       });
-//       return;
-//     }
-
-//     final Duration selisih = _tanggalKembali!.difference(_tanggalTenggat!);
-//     final int totalHariTelat = selisih.inDays;
-//     final int denda = totalHariTelat * 1000;
-
-//     setState(() {
-//       _totalDenda = denda;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Hitung Denda Keterlambatan'),
-//       ),
-//       // --- Logika loading/error dihapus, body utama dikembalikan ---
-//       body: SingleChildScrollView(
-//         padding: const EdgeInsets.all(20.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.stretch,
-//           children: [
-//             // --- Input Tanggal Tenggat ---
-//             _buildPickerCard(
-//               context: context,
-//               title: 'Tenggat Peminjaman',
-//               timeText: _formatDate(_tanggalTenggat),
-//               onTap: () async {
-//                 final waktu = await _pilihTanggal(context);
-//                 if (waktu != null) {
-//                   setState(() {
-//                     _tanggalTenggat = waktu;
-//                     _totalDenda = null;
-//                   });
-//                 }
-//               },
-//             ),
-//             const SizedBox(height: 16),
-
-//             // --- Input Tanggal Kembali ---
-//             _buildPickerCard(
-//               context: context,
-//               title: 'Tanggal Pengembalian',
-//               timeText: _formatDate(_tanggalKembali),
-//               onTap: () async {
-//                 final waktu = await _pilihTanggal(context);
-//                 if (waktu != null) {
-//                   setState(() {
-//                     _tanggalKembali = waktu;
-//                     _totalDenda = null;
-//                   });
-//                 }
-//               },
-//             ),
-//             const SizedBox(height: 30),
-
-//             // --- Tombol Hitung ---
-//             ElevatedButton.icon(
-//               icon: const Icon(Icons.calculate_rounded),
-//               label: const Text('HITUNG DENDA'),
-//               onPressed: _hitungDenda,
-//               style: ElevatedButton.styleFrom(
-//                 padding: const EdgeInsets.symmetric(vertical: 16),
-//                 textStyle:
-//                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-//               ),
-//             ),
-//             const SizedBox(height: 30),
-
-//             // --- Hasil Perhitungan ---
-//             if (_totalDenda != null) ...[
-//               Center(
-//                 child: Text(
-//                   'Total Denda yang Harus Dibayar:',
-//                   style: Theme.of(context).textTheme.titleMedium,
-//                 ),
-//               ),
-//               const SizedBox(height: 12),
-//               // --- Hasil IDR ---
-//               Center(
-//                 child: Container(
-//                   padding:
-//                       const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-//                   decoration: BoxDecoration(
-//                     color: Colors.blue.shade50,
-//                     borderRadius: BorderRadius.circular(12),
-//                     border: Border.all(color: Colors.blue.shade200),
-//                   ),
-//                   child: Text(
-//                     'Rp $_totalDenda', // Denda dalam IDR
-//                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-//                           fontWeight: FontWeight.bold,
-//                           color: Colors.blue.shade900,
-//                         ),
-//                   ),
-//                 ),
-//               ),
-//               if (_totalDenda == 0)
-//                 const Padding(
-//                   padding: EdgeInsets.only(top: 10),
-//                   child: Center(
-//                     child: Text(
-//                       'Tepat waktu, tidak ada denda!',
-//                       style: TextStyle(color: Colors.green),
-//                     ),
-//                   ),
-//                 ),
-
-//               // --- Bagian Konversi (menggunakan _manualRates) ---
-//               if (_totalDenda! > 0) ...[
-//                 const SizedBox(height: 24),
-//                 const Divider(),
-//                 const SizedBox(height: 16),
-//                 Center(
-//                   child: Text(
-//                     'Estimasi Konversi Kurs:',
-//                     style: Theme.of(context).textTheme.titleMedium,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
-//                 Card(
-//                   elevation: 1,
-//                   color: Colors.grey.shade50,
-//                   child: Padding(
-//                     padding: const EdgeInsets.all(16.0),
-//                     child: Column(
-//                       children: [
-//                         _buildCurrencyRow(
-//                           'MYR',
-//                           'RM',
-//                           _manualRates['MYR']!, // Ambil dari map manual
-//                         ),
-//                         const Divider(height: 16),
-//                         _buildCurrencyRow(
-//                           'USD',
-//                           '\$',
-//                           _manualRates['USD']!, // Ambil dari map manual
-//                         ),
-//                         const Divider(height: 16),
-//                         _buildCurrencyRow(
-//                           'EUR',
-//                           '€',
-//                           _manualRates['EUR']!, // Ambil dari map manual
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-                
-//               ]
-//             ]
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   // --- Widget helper untuk baris konversi (Tidak berubah) ---
-//   Widget _buildCurrencyRow(String currencyCode, String symbol, double rate) {
-//     // Lakukan kalkulasi konversi
-//     final double convertedValue = _totalDenda! * rate;
-
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//       children: [
-//         Text(
-//           '$currencyCode ($symbol)',
-//           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-//         ),
-//         Text(
-//           // Tampilkan 2 angka di belakang koma untuk mata uang asing
-//           convertedValue.toStringAsFixed(2),
-//           style: const TextStyle(
-//               fontSize: 18,
-//               fontWeight: FontWeight.bold,
-//               color: Colors.black87),
-//         ),
-//       ],
-//     );
-//   }
-
-//   // Widget helper untuk card input (Tidak berubah)
-//   Widget _buildPickerCard({
-//     required BuildContext context,
-//     required String title,
-//     required String timeText,
-//     required VoidCallback onTap,
-//   }) {
-//     return Card(
-//       elevation: 2,
-//       child: ListTile(
-//         contentPadding:
-//             const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-//         leading: Icon(
-//           Icons.calendar_today_rounded,
-//           color: Theme.of(context).primaryColor,
-//           size: 30,
-//         ),
-//         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-//         subtitle: Text(
-//           timeText,
-//           style: TextStyle(
-//             fontSize: 16,
-//             color: timeText == 'Belum dipilih'
-//                 ? Colors.grey.shade600
-//                 : Colors.black87,
-//           ),
-//         ),
-//         trailing: const Icon(Icons.edit_calendar_rounded),
-//         onTap: onTap,
-//       ),
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
+import 'package:library_app/services/notification_service.dart'; // Import notification service
 
 class DendaTab extends StatefulWidget {
   const DendaTab({super.key});
@@ -314,22 +9,21 @@ class DendaTab extends StatefulWidget {
 }
 
 class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin {
-  // Variabel untuk menyimpan tanggal yang dipilih
   DateTime? _tanggalTenggat;
   DateTime? _tanggalKembali;
-
-  // Variabel untuk menyimpan hasil perhitungan
   int? _totalDenda;
+  bool _isSchedulingNotification = false; // Track notifikasi
 
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
-  // Kurs Manual
   final Map<String, double> _manualRates = {
     'MYR': 0.00029,
     'USD': 0.000061,
     'EUR': 0.000057,
   };
+
+  final NotificationService _notificationService = NotificationService();
 
   @override
   void initState() {
@@ -349,7 +43,6 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  // Fungsi untuk menampilkan format tanggal
   String _formatDate(DateTime? dt) {
     if (dt == null) {
       return 'Belum dipilih';
@@ -361,7 +54,6 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
     return "${dt.day} ${months[dt.month - 1]} ${dt.year}";
   }
 
-  // Fungsi untuk memilih Tanggal
   Future<DateTime?> _pilihTanggal(BuildContext context) async {
     final DateTime? tanggal = await showDatePicker(
       context: context,
@@ -385,8 +77,7 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
     return tanggal;
   }
 
-  // Fungsi untuk menghitung denda
-  void _hitungDenda() {
+  void _hitungDenda() async {
     if (_tanggalTenggat == null || _tanggalKembali == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -438,10 +129,105 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
 
     setState(() {
       _totalDenda = denda;
+      _isSchedulingNotification = true;
     });
     
     _animationController.reset();
     _animationController.forward();
+
+    // Tampilkan SnackBar countdown
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('Notifikasi akan dikirim dalam 5 detik...'),
+            ),
+          ],
+        ),
+        backgroundColor: Color(0xFF8B4513),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+
+    // Schedule notifikasi setelah 5 detik
+    if (denda > 0) {
+      _notificationService.scheduleDendaNotification(
+        totalDenda: denda,
+        hariTelat: totalHariTelat,
+        tanggalKembali: _formatDate(_tanggalKembali),
+      ).then((_) {
+        setState(() {
+          _isSchedulingNotification = false;
+        });
+        
+        // Tampilkan konfirmasi notifikasi terkirim
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.notifications_active, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Notifikasi pengingat telah dikirim!'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      });
+    } else {
+      // Jika tidak ada denda, kirim notifikasi tepat waktu setelah 5 detik
+      Future.delayed(const Duration(seconds: 5), () {
+        _notificationService.showNoDendaNotification(
+          tanggalKembali: _formatDate(_tanggalKembali),
+        );
+        
+        setState(() {
+          _isSchedulingNotification = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.notifications_active, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Notifikasi pengingat telah dikirim!'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -520,6 +306,25 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                         ],
                       ),
                     ),
+                    // Indikator notifikasi
+                    if (_isSchedulingNotification)
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF8B4513).withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF8B4513),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -664,10 +469,11 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                           ],
                         ),
                         child: ElevatedButton(
-                          onPressed: _hitungDenda,
+                          onPressed: _isSchedulingNotification ? null : _hitungDenda,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
+                            disabledBackgroundColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -675,10 +481,24 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.calculate_rounded, color: Color(0xFFF5E6D3)),
+                              if (_isSchedulingNotification)
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFFF5E6D3),
+                                    ),
+                                  ),
+                                )
+                              else
+                                Icon(Icons.calculate_rounded, color: Color(0xFFF5E6D3)),
                               const SizedBox(width: 12),
                               Text(
-                                'HITUNG DENDA',
+                                _isSchedulingNotification 
+                                    ? 'MENGIRIM NOTIFIKASI...' 
+                                    : 'HITUNG DENDA',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -748,8 +568,8 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                                         )
                                       : LinearGradient(
                                           colors: [
-                                            Color(0xFFD4AF37).withOpacity(0.1),
-                                            Color(0xFFD4AF37).withOpacity(0.2),
+                                            Color(0xFFFFFDF7), // Cream putih tulang
+                                            Color(0xFFFAF6EF), // Cream agak kekuningan
                                           ],
                                         ),
                                   border: Border(
@@ -789,7 +609,8 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                                         'Jumlah yang harus dibayar:',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: Color(0xFF654321),
+                                          color: Color(0xFF3E2723),
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
@@ -801,8 +622,15 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                                         style: TextStyle(
                                           fontSize: 36,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF8B4513),
+                                          color: Color(0xFF8B2500), // Coklat merah tua
                                           letterSpacing: 1,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black.withOpacity(0.15),
+                                              offset: Offset(1, 1),
+                                              blurRadius: 2,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       const SizedBox(height: 8),
@@ -812,18 +640,19 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                                           vertical: 8,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Color(0xFF8B4513).withOpacity(0.1),
+                                          color: Color(0xFFFFEFE5), // Cream pink muda
                                           borderRadius: BorderRadius.circular(8),
                                           border: Border.all(
-                                            color: Color(0xFF8B4513).withOpacity(0.3),
+                                            color: Color(0xFFD4AF37), // Gold border
+                                            width: 1.5,
                                           ),
                                         ),
                                         child: Text(
                                           '${(_tanggalKembali!.difference(_tanggalTenggat!).inDays)} hari keterlambatan',
                                           style: TextStyle(
                                             fontSize: 13,
-                                            color: Color(0xFF654321),
-                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF5D3A1A), // Coklat gelap
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                       ),
@@ -832,7 +661,7 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                                 ),
                               ),
                               
-                              // Footer
+                              // Footer dengan info notifikasi
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -843,22 +672,45 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
                                   ),
                                   border: Border.all(color: Color(0xFFD4AF37), width: 2),
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                child: Column(
                                   children: [
-                                    Icon(
-                                      Icons.access_time_rounded,
-                                      size: 16,
-                                      color: Color(0xFF8B4513),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.access_time_rounded,
+                                          size: 16,
+                                          color: Color(0xFF8B4513),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Dihitung pada ${_formatDate(DateTime.now())}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF654321),
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Dihitung pada ${_formatDate(DateTime.now())}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF654321),
-                                        fontStyle: FontStyle.italic,
-                                      ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.notifications_active,
+                                          size: 16,
+                                          color: Color(0xFF8B4513),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Notifikasi pengingat akan dikirim',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF654321),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -931,7 +783,6 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
     );
   }
 
-  // Widget untuk Date Card
   Widget _buildDateCard({
     required String title,
     required IconData icon,
@@ -1019,7 +870,6 @@ class _DendaTabState extends State<DendaTab> with SingleTickerProviderStateMixin
     );
   }
 
-  // Widget untuk Currency Row
   Widget _buildCurrencyRow(String currencyName, String currencyCode, String symbol, double rate) {
     final double convertedValue = _totalDenda! * rate;
 

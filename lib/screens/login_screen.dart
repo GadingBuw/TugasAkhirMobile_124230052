@@ -11,11 +11,17 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  // --- TAMBAHAN ---
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  // --- TAMBAHAN ---
+  bool _isLoginMode = true;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
@@ -40,6 +46,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    // --- TAMBAHAN ---
+    _confirmPasswordController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -73,6 +81,59 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       );
     }
   }
+
+  // --- FUNGSI BARU ---
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    // Validasi password konfirmasi
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(child: Text('Password dan konfirmasi tidak cocok!')),
+            ],
+          ),
+          backgroundColor: Colors.orange.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final bool success = await authProvider.register(
+      _usernameController.text,
+      _passwordController.text,
+    );
+
+    if (mounted && !success) {
+      // Ini berarti username sudah digunakan
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(child: Text('Username tersebut sudah digunakan!')),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
+    // Jika sukses, AuthProvider akan otomatis memindahkan state
+  }
+  // --- BATAS FUNGSI BARU ---
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +204,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             ),
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Color(0xFFD4AF37),
                                 borderRadius: BorderRadius.circular(12),
@@ -163,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ],
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Title with elegant typography
                     Text(
                       'PERPUSTAKAAN',
@@ -193,7 +255,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 6),
                       decoration: BoxDecoration(
                         border: Border(
                           top: BorderSide(color: Color(0xFFD4AF37), width: 1),
@@ -211,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                     ),
                     const SizedBox(height: 40),
-                    
+
                     // Login Form Card - Wood texture style
                     Container(
                       padding: const EdgeInsets.all(28),
@@ -238,10 +301,19 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             // Header
                             Row(
                               children: [
-                                Icon(Icons.auto_stories, color: Color(0xFF8B4513), size: 24),
+                                // --- PERUBAHAN ---
+                                Icon(
+                                    _isLoginMode
+                                        ? Icons.auto_stories
+                                        : Icons.person_add_alt_1,
+                                    color: Color(0xFF8B4513),
+                                    size: 24),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Portal Masuk Anggota',
+                                  // --- PERUBAHAN ---
+                                  _isLoginMode
+                                      ? 'Portal Masuk Anggota'
+                                      : 'Daftar Akun Baru',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -251,27 +323,32 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               ],
                             ),
                             const SizedBox(height: 24),
-                            
+
                             // Username Field
                             TextFormField(
                               controller: _usernameController,
-                              style: TextStyle(fontSize: 16, color: Color(0xFF3E2723)),
+                              style: TextStyle(
+                                  fontSize: 16, color: Color(0xFF3E2723)),
                               decoration: InputDecoration(
                                 labelText: 'Nama Pengguna',
                                 labelStyle: TextStyle(color: Color(0xFF8B4513)),
                                 hintText: 'Masukkan username',
-                                hintStyle: TextStyle(color: Color(0xFF8B4513).withOpacity(0.5)),
+                                hintStyle: TextStyle(
+                                    color: Color(0xFF8B4513).withOpacity(0.5)),
                                 prefixIcon: Icon(
                                   Icons.person_outline_rounded,
                                   color: Color(0xFF8B4513),
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Color(0xFFD4AF37), width: 2),
+                                  borderSide: BorderSide(
+                                      color: Color(0xFFD4AF37), width: 2),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Color(0xFF8B4513).withOpacity(0.5), width: 2),
+                                  borderSide: BorderSide(
+                                      color: Color(0xFF8B4513).withOpacity(0.5),
+                                      width: 2),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -287,17 +364,19 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   value!.isEmpty ? 'Username tidak boleh kosong' : null,
                             ),
                             const SizedBox(height: 18),
-                            
+
                             // Password Field
                             TextFormField(
                               controller: _passwordController,
                               obscureText: !_isPasswordVisible,
-                              style: TextStyle(fontSize: 16, color: Color(0xFF3E2723)),
+                              style: TextStyle(
+                                  fontSize: 16, color: Color(0xFF3E2723)),
                               decoration: InputDecoration(
                                 labelText: 'Kata Sandi',
                                 labelStyle: TextStyle(color: Color(0xFF8B4513)),
                                 hintText: 'Masukkan password',
-                                hintStyle: TextStyle(color: Color(0xFF8B4513).withOpacity(0.5)),
+                                hintStyle: TextStyle(
+                                    color: Color(0xFF8B4513).withOpacity(0.5)),
                                 prefixIcon: Icon(
                                   Icons.lock_outline_rounded,
                                   color: Color(0xFF8B4513),
@@ -317,11 +396,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Color(0xFFD4AF37), width: 2),
+                                  borderSide: BorderSide(
+                                      color: Color(0xFFD4AF37), width: 2),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Color(0xFF8B4513).withOpacity(0.5), width: 2),
+                                  borderSide: BorderSide(
+                                      color: Color(0xFF8B4513).withOpacity(0.5),
+                                      width: 2),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -336,8 +418,80 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               validator: (value) =>
                                   value!.isEmpty ? 'Password tidak boleh kosong' : null,
                             ),
+
+                            // --- BLOK BARU (MENGGANTIKAN SIZEDBOX(28)) ---
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              child: Visibility(
+                                visible: !_isLoginMode,
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 18),
+                                    TextFormField(
+                                      controller: _confirmPasswordController,
+                                      obscureText: !_isPasswordVisible,
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          color: Color(0xFF3E2723)),
+                                      decoration: InputDecoration(
+                                        labelText: 'Konfirmasi Kata Sandi',
+                                        labelStyle:
+                                            TextStyle(color: Color(0xFF8B4513)),
+                                        hintText: 'Ulangi password',
+                                        hintStyle: TextStyle(
+                                            color: Color(0xFF8B4513)
+                                                .withOpacity(0.5)),
+                                        prefixIcon: Icon(
+                                          Icons.lock_outline_rounded,
+                                          color: Color(0xFF8B4513),
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: Color(0xFFD4AF37),
+                                              width: 2),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: Color(0xFF8B4513)
+                                                  .withOpacity(0.5),
+                                              width: 2),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                            color: Color(0xFF8B4513),
+                                            width: 2.5,
+                                          ),
+                                        ),
+                                        filled: true,
+                                        fillColor:
+                                            Colors.white.withOpacity(0.7),
+                                      ),
+                                      validator: (value) {
+                                        if (_isLoginMode) return null;
+                                        if (value == null || value.isEmpty) {
+                                          return 'Konfirmasi tidak boleh kosong';
+                                        }
+                                        if (value != _passwordController.text) {
+                                          return 'Password tidak cocok';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // --- BATAS BLOK BARU ---
+
                             const SizedBox(height: 28),
-                            
+
                             // Login Button
                             Consumer<AuthProvider>(
                               builder: (context, auth, child) {
@@ -354,7 +508,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Color(0xFF8B4513).withOpacity(0.5),
+                                          color: Color(0xFF8B4513)
+                                              .withOpacity(0.5),
                                           blurRadius: 12,
                                           offset: const Offset(0, 6),
                                         ),
@@ -362,7 +517,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                     ),
                                     child: Center(
                                       child: CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF5E6D3)),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Color(0xFFF5E6D3)),
                                       ),
                                     ),
                                   );
@@ -379,28 +536,42 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Color(0xFF8B4513).withOpacity(0.5),
+                                        color:
+                                            Color(0xFF8B4513).withOpacity(0.5),
                                         blurRadius: 12,
                                         offset: const Offset(0, 6),
                                       ),
                                     ],
                                   ),
                                   child: ElevatedButton(
-                                    onPressed: _handleLogin,
+                                    // --- PERUBAHAN ---
+                                    onPressed: _isLoginMode
+                                        ? _handleLogin
+                                        : _handleRegister,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
                                       shadowColor: Colors.transparent,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius:
+                                            BorderRadius.circular(12),
                                       ),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.login_rounded, color: Color(0xFFF5E6D3)),
+                                        // --- PERUBAHAN ---
+                                        Icon(
+                                            _isLoginMode
+                                                ? Icons.login_rounded
+                                                : Icons.person_add,
+                                            color: Color(0xFFF5E6D3)),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'MASUK PERPUSTAKAAN',
+                                          // --- PERUBAHAN ---
+                                          _isLoginMode
+                                              ? 'MASUK PERPUSTAKAAN'
+                                              : 'DAFTAR & MASUK',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -419,69 +590,36 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
-                    // Info Card - Book style
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF5E6D3).withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Color(0xFFD4AF37),
-                          width: 2,
+
+                    // --- BLOK BARU ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _isLoginMode
+                              ? 'Belum punya akun?'
+                              : 'Sudah punya akun?',
+                          style: TextStyle(
+                              color: Color(0xFFF5E6D3).withOpacity(0.7)),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _isLoginMode = !_isLoginMode;
+                            });
+                          },
+                          child: Text(
+                            _isLoginMode ? 'Daftar di sini' : 'Login di sini',
+                            style: TextStyle(
                               color: Color(0xFFD4AF37),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.bookmark_rounded,
-                              color: Color(0xFF3E2723),
-                              size: 28,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Akun Demo Pustakawan',
-                                  style: TextStyle(
-                                    color: Color(0xFF3E2723),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Username: user\nPassword: password123',
-                                  style: TextStyle(
-                                    color: Color(0xFF654321),
-                                    fontSize: 12,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    
+                    // --- BATAS BLOK BARU ---
+
                     // Footer quote
                     Text(
                       '"Membaca adalah jendela dunia"',

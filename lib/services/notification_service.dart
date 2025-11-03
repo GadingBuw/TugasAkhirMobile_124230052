@@ -1,173 +1,176 @@
-// import 'dart:ui';
+import 'dart:ui';
 
-// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-// import 'package:permission_handler/permission_handler.dart';
-// import 'package:timezone/timezone.dart' as tz;
-// import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 
-// class NotificationService {
-//   static final NotificationService _instance = NotificationService._internal();
-//   factory NotificationService() => _instance;
-//   NotificationService._internal();
+class NotificationService {
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
 
-//   final FlutterLocalNotificationsPlugin _notifications =
-//       FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-//   bool _isInitialized = false;
+  // Inisialisasi notifikasi
+  Future<void> initialize() async {
+    // Inisialisasi timezone
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
 
-//   // Inisialisasi notifikasi
-//   Future<void> initialize() async {
-//     if (_isInitialized) return;
+    // Setting untuk Android
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-//     // Inisialisasi timezone
-//     tz.initializeTimeZones();
-//     tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
+    const DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
 
-//     // Android initialization settings
-//     const AndroidInitializationSettings initializationSettingsAndroid =
-//         AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
 
-//     // iOS initialization settings
-//     const DarwinInitializationSettings initializationSettingsIOS =
-//         DarwinInitializationSettings(
-//       requestAlertPermission: true,
-//       requestBadgePermission: true,
-//       requestSoundPermission: true,
-//     );
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+    );
 
-//     const InitializationSettings initializationSettings =
-//         InitializationSettings(
-//       android: initializationSettingsAndroid,
-//       iOS: initializationSettingsIOS,
-//     );
+    // Request permission untuk Android 13+
+    await _requestPermissions();
+  }
 
-//     await _notifications.initialize(
-//       initializationSettings,
-//       onDidReceiveNotificationResponse: _onNotificationTapped,
-//     );
+  // Request permission
+  Future<void> _requestPermissions() async {
+    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
 
-//     _isInitialized = true;
-//   }
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
+    }
+  }
 
-//   // Request permission untuk notifikasi
-//   Future<bool> requestPermission() async {
-//     if (await Permission.notification.isGranted) {
-//       return true;
-//     }
+  // Handler ketika notifikasi diklik
+  void onDidReceiveNotificationResponse(NotificationResponse response) async {
+    final String? payload = response.payload;
+    if (payload != null) {
+      print('Notification payload: $payload');
+      // Anda bisa menambahkan navigasi atau aksi lain di sini
+    }
+  }
 
-//     final status = await Permission.notification.request();
-//     return status.isGranted;
-//   }
+  // Kirim notifikasi pengingat denda
+  Future<void> showDendaNotification({
+    required int totalDenda,
+    required int hariTelat,
+    required String tanggalKembali,
+  }) async {
+    // Format angka dengan pemisah ribuan
+    String formattedDenda = totalDenda.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
 
-//   // Callback ketika notifikasi di-tap
-//   void _onNotificationTapped(NotificationResponse response) {
-//     // Handle notifikasi yang di-tap
-//     print('Notifikasi di-tap: ${response.payload}');
-//   }
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'denda_channel', // channel id
+      'Pengingat Denda', // channel name
+      channelDescription: 'Notifikasi pengingat pembayaran denda keterlambatan buku',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: Color(0xFF8B4513),
+      playSound: true,
+      enableVibration: true,
+      styleInformation: BigTextStyleInformation(''),
+    );
 
-//   // Kirim notifikasi segera (untuk pengingat hari ini)
-//   Future<void> showImmediateNotification({
-//     required String title,
-//     required String body,
-//     String? payload,
-//   }) async {
-//     const AndroidNotificationDetails androidDetails =
-//         AndroidNotificationDetails(
-//       'denda_channel', // Channel ID
-//       'Pengingat Denda', // Channel name
-//       channelDescription: 'Notifikasi pengingat denda pengembalian buku',
-//       importance: Importance.high,
-//       priority: Priority.high,
-//       showWhen: true,
-//       icon: '@mipmap/ic_launcher',
-//       color: Color(0xFF2196F3),
-//       playSound: true,
-//       enableVibration: true,
-//     );
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
-//     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-//       presentAlert: true,
-//       presentBadge: true,
-//       presentSound: true,
-//     );
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
-//     const NotificationDetails details = NotificationDetails(
-//       android: androidDetails,
-//       iOS: iosDetails,
-//     );
+    await flutterLocalNotificationsPlugin.show(
+      0, // notification id
+      '📚 Pengingat Pengembalian Buku',
+      'Hari ini adalah hari pengembalian buku. Anda memiliki denda keterlambatan sebesar Rp $formattedDenda ($hariTelat hari keterlambatan). Segera lakukan pembayaran!',
+      notificationDetails,
+      payload: 'denda_$totalDenda',
+    );
+  }
 
-//     await _notifications.show(
-//       0, // Notification ID
-//       title,
-//       body,
-//       details,
-//       payload: payload,
-//     );
-//   }
+  // Kirim notifikasi dengan delay (5 detik)
+  Future<void> scheduleDendaNotification({
+    required int totalDenda,
+    required int hariTelat,
+    required String tanggalKembali,
+  }) async {
+    // Menunggu 5 detik
+    await Future.delayed(const Duration(seconds: 5));
+    
+    // Kirim notifikasi
+    await showDendaNotification(
+      totalDenda: totalDenda,
+      hariTelat: hariTelat,
+      tanggalKembali: tanggalKembali,
+    );
+  }
 
-//   // Jadwalkan notifikasi untuk tanggal tertentu
-//   Future<void> scheduleNotification({
-//     required int id,
-//     required String title,
-//     required String body,
-//     required DateTime scheduledDate,
-//     String? payload,
-//   }) async {
-//     final tz.TZDateTime scheduledTZ = tz.TZDateTime.from(
-//       scheduledDate,
-//       tz.local,
-//     );
+  // Kirim notifikasi langsung untuk kasus tidak ada denda
+  Future<void> showNoDendaNotification({
+    required String tanggalKembali,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'denda_channel',
+      'Pengingat Denda',
+      channelDescription: 'Notifikasi pengingat pembayaran denda keterlambatan buku',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: Color(0xFF4CAF50),
+      playSound: true,
+      enableVibration: true,
+    );
 
-//     const AndroidNotificationDetails androidDetails =
-//         AndroidNotificationDetails(
-//       'denda_channel',
-//       'Pengingat Denda',
-//       channelDescription: 'Notifikasi pengingat denda pengembalian buku',
-//       importance: Importance.high,
-//       priority: Priority.high,
-//       showWhen: true,
-//       icon: '@mipmap/ic_launcher',
-//       color: Color(0xFF2196F3),
-//       playSound: true,
-//       enableVibration: true,
-//     );
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
-//     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-//       presentAlert: true,
-//       presentBadge: true,
-//       presentSound: true,
-//     );
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
-//     const NotificationDetails details = NotificationDetails(
-//       android: androidDetails,
-//       iOS: iosDetails,
-//     );
+    await flutterLocalNotificationsPlugin.show(
+      1,
+      '✅ Tepat Waktu!',
+      'Selamat! Anda mengembalikan buku tepat waktu. Tidak ada denda yang perlu dibayar. Terima kasih atas kedisiplinan Anda!',
+      notificationDetails,
+      payload: 'no_denda',
+    );
+  }
 
-//     await _notifications.zonedSchedule(
-//       id,
-//       title,
-//       body,
-//       scheduledTZ,
-//       details,
-//       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-//       uiLocalNotificationDateInterpretation:
-//           UILocalNotificationDateInterpretation.absoluteTime,
-//       payload: payload,
-//     );
-//   }
+  // Cancel semua notifikasi
+  Future<void> cancelAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
 
-//   // Batalkan notifikasi tertentu
-//   Future<void> cancelNotification(int id) async {
-//     await _notifications.cancel(id);
-//   }
-
-//   // Batalkan semua notifikasi
-//   Future<void> cancelAllNotifications() async {
-//     await _notifications.cancelAll();
-//   }
-
-//   // Cek apakah notifikasi sudah dijadwalkan
-//   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
-//     return await _notifications.pendingNotificationRequests();
-//   }
-// }
+  // Cancel notifikasi spesifik
+  Future<void> cancelNotification(int id) async {
+    await flutterLocalNotificationsPlugin.cancel(id);
+  }
+}
