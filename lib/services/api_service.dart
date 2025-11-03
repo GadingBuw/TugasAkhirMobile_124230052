@@ -1,17 +1,13 @@
-// lib/services/api_service.dart
-
 import 'package:http/http.dart' as http;
 import '../models/book.dart';
 
 class ApiService {
   final String _baseUrl = 'https://gutendex.com/books/';
 
-  // Mengambil daftar buku (untuk halaman utama)
   Future<List<Book>> fetchBooks() async {
     try {
       final response = await http.get(Uri.parse(_baseUrl));
       if (response.statusCode == 200) {
-        // Kita gunakan helper bookListFromJson
         return bookListFromJson(response.body);
       } else {
         throw Exception('Failed to load books');
@@ -21,12 +17,10 @@ class ApiService {
     }
   }
 
-  // Mengambil detail satu buku (untuk halaman detail)
   Future<Book> fetchBookDetails(int bookId) async {
     try {
       final response = await http.get(Uri.parse('$_baseUrl$bookId/'));
       if (response.statusCode == 200) {
-        // Kita gunakan helper bookFromJson
         return bookFromJson(response.body);
       } else {
         throw Exception('Failed to load book details');
@@ -36,7 +30,6 @@ class ApiService {
     }
   }
 
-  // Fungsi pencarian
   Future<List<Book>> searchBooks(String query) async {
     try {
       final response = await http.get(Uri.parse('$_baseUrl?search=$query'));

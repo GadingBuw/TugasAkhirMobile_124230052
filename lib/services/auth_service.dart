@@ -1,18 +1,14 @@
-// lib/services/auth_service.dart
-
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // Import Hive
-import '../models/user_model.dart'; // Import model User baru
+import 'package:hive_flutter/hive_flutter.dart'; 
+import '../models/user_model.dart'; 
 
 class AuthService {
   final Box<User> _userBox = Hive.box<User>('users');
 
   static const String _sessionKey = 'isLoggedIn';
-  // --- KUNCI BARU UNTUK MENYIMPAN USERNAME ---
   static const String _userKey = 'activeUsername';
-  // -------------------------------------------
 
   String _hashPassword(String password) {
     final bytes = utf8.encode(password);
@@ -22,7 +18,7 @@ class AuthService {
 
   Future<bool> register(String username, String password) async {
     if (_userBox.containsKey(username)) {
-      return false; // Username sudah digunakan
+      return false; 
     }
 
     final newPasswordHash = _hashPassword(password);
@@ -32,10 +28,8 @@ class AuthService {
     );
     await _userBox.put(username, newUser);
 
-    // Langsung loginkan pengguna setelah berhasil daftar
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_sessionKey, true);
-    // --- SIMPAN USERNAME AKTIF ---
     await prefs.setString(_userKey, username);
     return true;
   }
@@ -47,9 +41,7 @@ class AuthService {
 
     if (user != null) {
       if (user.passwordHash == inputPasswordHash) {
-        // Jika cocok, simpan session
         await prefs.setBool(_sessionKey, true);
-        // --- SIMPAN USERNAME AKTIF ---
         await prefs.setString(_userKey, username);
         return true;
       }
@@ -60,7 +52,6 @@ class AuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_sessionKey, false);
-    // --- HAPUS USERNAME AKTIF ---
     await prefs.remove(_userKey);
   }
 
@@ -69,10 +60,8 @@ class AuthService {
     return prefs.getBool(_sessionKey) ?? false;
   }
 
-  // --- FUNGSI BARU UNTUK MENDAPATKAN USERNAME ---
   Future<String?> getActiveUser() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_userKey);
   }
-  // ---------------------------------------------
 }

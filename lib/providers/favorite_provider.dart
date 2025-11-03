@@ -1,12 +1,9 @@
-// lib/providers/favorite_provider.dart
-
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../models/book.dart';
 import '../models/favorite_book.dart';
 
 class FavoriteProvider with ChangeNotifier {
-  // --- UBAH JADI NULLABLE ---
   Box<FavoriteBook>? _favoriteBox;
 
   List<FavoriteBook> _favorites = [];
@@ -14,27 +11,14 @@ class FavoriteProvider with ChangeNotifier {
 
   List<FavoriteBook> get favorites => _favorites;
 
-  // --- TAMBAHKAN USERNAME SAAT INI ---
   String? _currentUsername;
   String? get currentUsername => _currentUsername;
 
-  // --- HAPUS KONSTRUKTOR DAN _init() ---
-  // FavoriteProvider() {
-  //   _init();
-  // }
-  // Future<void> _init() async {
-  //   _favoriteBox = await Hive.openBox<FavoriteBook>('favorites');
-  //   _loadFavorites();
-  // }
-
-  // --- FUNGSI BARU UNTUK DIPANGGIL OLEH PROXYPROVIDER ---
   Future<void> updateUser(String? newUsername) async {
-    // Jika usernamenya sama, tidak perlu lakukan apa-apa
     if (_currentUsername == newUsername) return;
 
     _currentUsername = newUsername;
 
-    // Jika user logout (newUsername == null)
     if (newUsername == null) {
       if (_favoriteBox != null && _favoriteBox!.isOpen) {
         await _favoriteBox!.close();
@@ -46,20 +30,16 @@ class FavoriteProvider with ChangeNotifier {
       return;
     }
 
-    // Jika user baru login, tutup box lama (jika ada) dan buka box baru
     if (_favoriteBox != null && _favoriteBox!.isOpen) {
       await _favoriteBox!.close();
     }
 
-    // Buka box baru sesuai username
     _favoriteBox =
         await Hive.openBox<FavoriteBook>('favorites_$newUsername');
-    _loadFavorites(); // Muat data dari box baru dan notifikasi listener
+    _loadFavorites(); 
   }
-  // --- BATAS FUNGSI BARU ---
 
   void _loadFavorites() {
-    // --- TAMBAHKAN PENGECEKAN NULL ---
     if (_favoriteBox == null) return;
     _favorites = _favoriteBox!.values.toList();
     _favoriteIds.clear();
@@ -70,13 +50,11 @@ class FavoriteProvider with ChangeNotifier {
   }
 
   bool isFavorite(int bookId) {
-    // --- TAMBAHKAN PENGECEKAN NULL ---
     if (_favoriteBox == null) return false;
     return _favoriteIds.contains(bookId);
   }
 
   Future<void> toggleFavorite(Book book) async {
-    // --- TAMBAHKAN PENGECEKAN NULL ATAU BELUM TERBUKA ---
     if (_favoriteBox == null || !_favoriteBox!.isOpen) return;
 
     if (isFavorite(book.id)) {
@@ -98,11 +76,9 @@ class FavoriteProvider with ChangeNotifier {
   }
 
   Future<void> removeFavorite(int bookId) async {
-    // --- TAMBAHKAN PENGECEKAN NULL ATAU BELUM TERBUKA ---
     if (_favoriteBox == null || !_favoriteBox!.isOpen) return;
 
     if (isFavorite(bookId)) {
-      // Cek apakah masih ada
       await _favoriteBox!.delete(bookId);
       _favorites.removeWhere((fav) => fav.id == bookId);
       _favoriteIds.remove(bookId);

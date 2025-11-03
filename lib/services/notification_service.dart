@@ -12,13 +12,10 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // Inisialisasi notifikasi
   Future<void> initialize() async {
-    // Inisialisasi timezone
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
 
-    // Setting untuk Android
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -40,11 +37,9 @@ class NotificationService {
       onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
     );
 
-    // Request permission untuk Android 13+
     await _requestPermissions();
   }
 
-  // Request permission
   Future<void> _requestPermissions() async {
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
         flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
@@ -55,22 +50,18 @@ class NotificationService {
     }
   }
 
-  // Handler ketika notifikasi diklik
   void onDidReceiveNotificationResponse(NotificationResponse response) async {
     final String? payload = response.payload;
     if (payload != null) {
       print('Notification payload: $payload');
-      // Anda bisa menambahkan navigasi atau aksi lain di sini
     }
   }
 
-  // Kirim notifikasi pengingat denda
   Future<void> showDendaNotification({
     required int totalDenda,
     required int hariTelat,
     required String tanggalKembali,
   }) async {
-    // Format angka dengan pemisah ribuan
     String formattedDenda = totalDenda.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]}.',
@@ -78,8 +69,8 @@ class NotificationService {
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'denda_channel', // channel id
-      'Pengingat Denda', // channel name
+      'denda_channel', 
+      'Pengingat Denda', 
       channelDescription: 'Notifikasi pengingat pembayaran denda keterlambatan buku',
       importance: Importance.high,
       priority: Priority.high,
@@ -102,7 +93,7 @@ class NotificationService {
     );
 
     await flutterLocalNotificationsPlugin.show(
-      0, // notification id
+      0, 
       '📚 Pengingat Pengembalian Buku',
       'Hari ini adalah hari pengembalian buku. Anda memiliki denda keterlambatan sebesar Rp $formattedDenda ($hariTelat hari keterlambatan). Segera lakukan pembayaran!',
       notificationDetails,
@@ -110,16 +101,13 @@ class NotificationService {
     );
   }
 
-  // Kirim notifikasi dengan delay (5 detik)
   Future<void> scheduleDendaNotification({
     required int totalDenda,
     required int hariTelat,
     required String tanggalKembali,
   }) async {
-    // Menunggu 5 detik
     await Future.delayed(const Duration(seconds: 5));
     
-    // Kirim notifikasi
     await showDendaNotification(
       totalDenda: totalDenda,
       hariTelat: hariTelat,
@@ -127,7 +115,6 @@ class NotificationService {
     );
   }
 
-  // Kirim notifikasi langsung untuk kasus tidak ada denda
   Future<void> showNoDendaNotification({
     required String tanggalKembali,
   }) async {
@@ -164,12 +151,10 @@ class NotificationService {
     );
   }
 
-  // Cancel semua notifikasi
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
 
-  // Cancel notifikasi spesifik
   Future<void> cancelNotification(int id) async {
     await flutterLocalNotificationsPlugin.cancel(id);
   }

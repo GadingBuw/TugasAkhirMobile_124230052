@@ -2,15 +2,10 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Tambahkan permission notifikasi -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
-    <!-- 
-      ANDA PERLU MENAMBAHKAN DUA BARIS DI BAWAH INI
-      Ini adalah izin untuk mengakses lokasi (GPS)
-    -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
@@ -27,7 +22,7 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- ... sisa file Anda ... -->
+
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
@@ -38,8 +33,6 @@
             </intent-filter>
         </activity>
 
-
-      <!-- Receiver untuk notifikasi -->
         <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
         <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
@@ -52,8 +45,6 @@
             </intent-filter>
         </receiver>
 
-
-        <!-- ... sisa file Anda ... -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

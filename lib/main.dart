@@ -21,10 +21,8 @@ Future<void> main() async {
   Hive.registerAdapter(FavoriteBookAdapter());
   Hive.registerAdapter(UserAdapter());
 
-  // --- HAPUS PEMBUKAAN BOX FAVORIT DARI SINI ---
-  // await Hive.openBox<FavoriteBook>('favorites');
   await Hive.openBox<User>('users');
-  // ------------------------------------------
+
 
   await NotificationService().initialize();
 
@@ -38,33 +36,23 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // 1. AuthProvider harus dibuat terlebih dahulu
         ChangeNotifierProvider(create: (ctx) => AuthProvider()),
         
-        // 2. BookProvider tidak bergantung pada apa pun
         ChangeNotifierProvider(create: (ctx) => BookProvider()),
 
-        // 3. UBAH FavoriteProvider menjadi PROXY
         ChangeNotifierProxyProvider<AuthProvider, FavoriteProvider>(
-          // 'create' dipanggil sekali saat app start
           create: (context) => FavoriteProvider(),
-          
-          // 'update' dipanggil setiap kali AuthProvider memanggil notifyListeners()
+
           update: (context, auth, previousFavoriteProvider) {
-            // 'auth' adalah instance AuthProvider
-            // 'previousFavoriteProvider' adalah instance FavoriteProvider dari build sebelumnya
             
             if (previousFavoriteProvider == null) return FavoriteProvider();
 
-            // Cek apakah username-nya berubah
             if (auth.activeUsername != previousFavoriteProvider.currentUsername) {
-              // Jika berubah (login/logout), panggil method updateUser
               previousFavoriteProvider.updateUser(auth.activeUsername);
             }
             return previousFavoriteProvider;
           },
         ),
-        // --- BATAS PERUBAHAN PROVIDER ---
       ],
       child: MaterialApp(
         title: 'Perpustakaan Novel',

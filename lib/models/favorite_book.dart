@@ -1,8 +1,6 @@
-// lib/models/favorite_book.dart
-
 import 'package:hive/hive.dart';
 
-part 'favorite_book.g.dart'; // File ini akan digenerate
+part 'favorite_book.g.dart';
 
 @HiveType(typeId: 0)
 class FavoriteBook extends HiveObject {
